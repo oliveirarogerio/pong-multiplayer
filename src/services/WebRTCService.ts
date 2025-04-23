@@ -158,8 +158,10 @@ export class WebRTCService {
   public async joinSession(
     sessionCode: string,
     password?: string
-  ): Promise<void> {// Clean up any existing connection
-    try {this.close();
+  ): Promise<void> {
+    // Clean up any existing connection
+    try {
+      this.close();
       // Add a small delay to ensure cleanup is complete
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
@@ -184,7 +186,8 @@ export class WebRTCService {
         "⚠️ Ask the host for their PERMANENT session code (usually starts with different characters)"
       );
       // We'll still try to join, but with a warning
-    }this.role = PlayerRole.CLIENT;
+    }
+    this.role = PlayerRole.CLIENT;
     this.sessionInfo = {
       code: sessionCode,
       isHost: false,
@@ -193,7 +196,8 @@ export class WebRTCService {
     };
 
     // Initialize the connection
-    try {this.initializeConnection();
+    try {
+      this.initializeConnection();
 
       // Wait a moment for connection initialization
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -202,7 +206,8 @@ export class WebRTCService {
         throw new Error("Failed to initialize peer connection");
       }
 
-      // First check if the session existsconst sessionExists = await remoteSignalingService.checkSessionExists(
+      // First check if the session exists
+      const sessionExists = await remoteSignalingService.checkSessionExists(
         sessionCode
       );
 
@@ -224,7 +229,9 @@ export class WebRTCService {
         return;
       }
 
-      // Session exists, try to join itawait remoteSignalingService.joinSession(sessionCode);// Set up remote signaling event handlers
+      // Session exists, try to join it
+      await remoteSignalingService.joinSession(sessionCode);
+      // Set up remote signaling event handlers
       this.setupSignalingHandlers();
 
       // Set a timeout for the connection attempt
@@ -267,11 +274,12 @@ export class WebRTCService {
       }
 
       try {
-        // Log current connection state// Handle different signaling states
+        // Log current connection state
         const currentState = this.peerConnection.signalingState;
 
         if (currentState !== "stable") {
-          if (currentState === "have-local-offer") {await this.peerConnection.setLocalDescription({ type: "rollback" });
+          if (currentState === "have-local-offer") {
+            await this.peerConnection.setLocalDescription({ type: "rollback" });
             // Wait a moment for the rollback to complete
             await new Promise((resolve) => setTimeout(resolve, 100));
           } else if (currentState !== "have-remote-offer") {
@@ -280,19 +288,23 @@ export class WebRTCService {
           }
         }
 
-        // Set remote description");
-        await this.peerConnection.setRemoteDescription(offer);// If we're the client, create and send answer
+        // Set remote description
+        await this.peerConnection.setRemoteDescription(offer);
+        // If we're the client, create and send answer
         if (this.role === PlayerRole.CLIENT) {
           // Wait a moment to ensure remote description is fully processed
-          await new Promise((resolve) => setTimeout(resolve, 100));const answer = await this.peerConnection.createAnswer();
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const answer = await this.peerConnection.createAnswer();
 
           // Verify we're still in the correct state
           if (this.peerConnection.signalingState !== "have-remote-offer") {
             throw new Error(
               `Invalid state for setting answer: ${this.peerConnection.signalingState}`
             );
-          }");
-          await this.peerConnection.setLocalDescription(answer);console.log("Sending answer to signaling service");
+          }
+
+          await this.peerConnection.setLocalDescription(answer);
+          console.log("Sending answer to signaling service");
           remoteSignalingService.sendAnswer(answer);
         }
       } catch (error) {
@@ -315,8 +327,10 @@ export class WebRTCService {
         return;
       }
 
-      try {if (this.peerConnection.signalingState === "have-local-offer") {
-          await this.peerConnection.setRemoteDescription(answer);set successfully");
+      try {
+        if (this.peerConnection.signalingState === "have-local-offer") {
+          await this.peerConnection.setRemoteDescription(answer);
+          console.log("Remote answer set successfully");
         } else {
           console.error(
             `Cannot set remote answer in state: ${this.peerConnection.signalingState}`
@@ -340,6 +354,11 @@ export class WebRTCService {
 
       try {
         await this.peerConnection.addIceCandidate(data.candidate);
+        if (data.candidate) {
+          console.debug("ICE candidate gathered");
+          // Send the ICE candidate to the remote peer via signaling service
+          remoteSignalingService.sendIceCandidate(data.candidate);
+        }
       } catch (error) {
         this.handleConnectionError(
           new Error(
@@ -352,7 +371,7 @@ export class WebRTCService {
     });
 
     // Handle connection events
-    remoteSignalingService.on("clientJoined", () => {});
+    remoteSignalingService.on("clientJoined", () => {});
 
     remoteSignalingService.on("hostDisconnected", () => {
       this.handleConnectionClosed();
@@ -360,7 +379,8 @@ export class WebRTCService {
 
     remoteSignalingService.on("clientDisconnected", () => {
       // Only relevant for host
-      if (this.role === PlayerRole.HOST) {}
+      if (this.role === PlayerRole.HOST) {
+      }
     });
 
     remoteSignalingService.on("connectionError", (error) => {
@@ -378,17 +398,23 @@ export class WebRTCService {
       return;
     }
 
-    try {// Create the data channel before creating the offer
+    try {
+      // Create the data channel before creating the offer
       this.createDataChannel();
 
       // Create the offer with ICE restart if needed
       const offerOptions: RTCOfferOptions = {};
-      if (iceRestart) {offerOptions.iceRestart = true;
+      if (iceRestart) {
+        offerOptions.iceRestart = true;
       }
 
-      // Create the offer"
-      );
-      const offer = await this.peerConnection.createOffer(offerOptions);console.debug(`Offer SDP type: ${offer.type}`);await this.peerConnection.setLocalDescription(offer);// Send the offer through the signaling serviceremoteSignalingService.sendOffer(offer);} catch (error) {
+      // Create the offer
+      const offer = await this.peerConnection.createOffer(offerOptions);
+      console.debug(`Offer SDP type: ${offer.type}`);
+      await this.peerConnection.setLocalDescription(offer);
+      // Send the offer through the signaling service
+      remoteSignalingService.sendOffer(offer);
+    } catch (error) {
       console.error("Failed to create and send offer:", error);
       this.handleConnectionError(
         new Error(
@@ -404,21 +430,24 @@ export class WebRTCService {
    * Initialize WebRTC peer connection
    */
   private initializeConnection(): void {
-    this.setConnectionStatus(ConnectionStatus.CONNECTING);try {
+    this.setConnectionStatus(ConnectionStatus.CONNECTING);
+    try {
       // Create a new RTCPeerConnection with enhanced configuration
       this.peerConnection = new RTCPeerConnection({
         iceServers: this.config.iceServers,
         iceTransportPolicy: "all",
         iceCandidatePoolSize: 10, // Increase candidate pool for Windows
         bundlePolicy: "max-bundle",
-      });// Setup connection timeout
+      });
+      // Setup connection timeout
       this.connectionTimeout = window.setTimeout(() => {
         if (this.connectionStatus === ConnectionStatus.CONNECTING) {
           console.error(
             "Connection timeout after",
             this.config.timeout / 1000,
             "seconds"
-          );console.log(
+          );
+          console.log(
             "ICE gathering state:",
             this.peerConnection?.iceGatheringState
           );
@@ -434,20 +463,24 @@ export class WebRTCService {
       }, this.config.timeout);
 
       // Set up event handlers for the peer connection
-      this.peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {+ "..."
-          );
+      this.peerConnection.onicecandidate = (
+        event: RTCPeerConnectionIceEvent
+      ) => {
+        if (event.candidate) {
+          console.debug("ICE candidate gathered");
           // Send the ICE candidate to the remote peer via signaling service
           remoteSignalingService.sendIceCandidate(event.candidate);
         }
       };
 
-      this.peerConnection.oniceconnectionstatechange = () => {switch (this.peerConnection?.iceConnectionState) {
+      this.peerConnection.oniceconnectionstatechange = () => {
+        switch (this.peerConnection?.iceConnectionState) {
           case "connected":
           case "completed":
             this.handleConnectionEstablished();
             break;
-          case "disconnected":// Give it a chance to recover before declaring it failed
+          case "disconnected":
+            // Give it a chance to recover before declaring it failed
             setTimeout(() => {
               if (this.peerConnection?.iceConnectionState === "disconnected") {
                 this.handleConnectionClosed();
@@ -464,11 +497,12 @@ export class WebRTCService {
         }
       };
 
-      this.peerConnection.onicegatheringstatechange = () => {};
+      this.peerConnection.onicegatheringstatechange = () => {};
 
-      this.peerConnection.onsignalingstatechange = () => {};
+      this.peerConnection.onsignalingstatechange = () => {};
 
-      this.peerConnection.onconnectionstatechange = () => {if (this.peerConnection?.connectionState === "connected") {
+      this.peerConnection.onconnectionstatechange = () => {
+        if (this.peerConnection?.connectionState === "connected") {
           this.handleConnectionEstablished();
         } else if (this.peerConnection?.connectionState === "failed") {
           console.error("Connection state failed - attempting reconnect");
@@ -476,7 +510,8 @@ export class WebRTCService {
         }
       };
 
-      this.peerConnection.ondatachannel = (event) => {this.setupDataChannel(event.channel);
+      this.peerConnection.ondatachannel = (event) => {
+        this.setupDataChannel(event.channel);
       };
     } catch (error) {
       console.error("Error creating peer connection:", error);
@@ -496,7 +531,8 @@ export class WebRTCService {
   private restartIce(): void {
     if (!this.peerConnection) return;
 
-    try {if (this.role === PlayerRole.HOST) {
+    try {
+      if (this.role === PlayerRole.HOST) {
         this.createAndSendOffer(true); // Create offer with ICE restart
       }
     } catch (error) {
@@ -507,7 +543,8 @@ export class WebRTCService {
   /**
    * Try to recreate the entire connection as a last resort
    */
-  private async restartConnection(): Promise<void> {try {
+  private async restartConnection(): Promise<void> {
+    try {
       // First, cleanup the signaling handlers to prevent race conditions
       remoteSignalingService.removeAllListeners();
 
@@ -550,10 +587,12 @@ export class WebRTCService {
       this.setupSignalingHandlers();
 
       // If we're the client, we need to rejoin the session
-      if (this.role === PlayerRole.CLIENT && this.sessionInfo?.code) {await remoteSignalingService.joinSession(this.sessionInfo.code);
+      if (this.role === PlayerRole.CLIENT && this.sessionInfo?.code) {
+        await remoteSignalingService.joinSession(this.sessionInfo.code);
       }
       // If host, create a new offer
-      else if (this.role === PlayerRole.HOST) {await this.createAndSendOffer();
+      else if (this.role === PlayerRole.HOST) {
+        await this.createAndSendOffer();
       }
     } catch (error) {
       console.error("Error during connection restart:", error);
@@ -574,10 +613,15 @@ export class WebRTCService {
     if (!this.peerConnection) {
       console.error("Cannot create data channel: No peer connection");
       return;
-    }try {
+    }
+    try {
       this.dataChannel = this.peerConnection.createDataChannel("gameData", {
         ordered: true,
-      });console.debug(`Data channel ID: ${this.dataChannel.id}`);console.debug(`Data channel ordered: ${this.dataChannel.ordered}`);this.setupDataChannel(this.dataChannel);} catch (error) {
+      });
+      console.debug(`Data channel ID: ${this.dataChannel.id}`);
+      console.debug(`Data channel ordered: ${this.dataChannel.ordered}`);
+      this.setupDataChannel(this.dataChannel);
+    } catch (error) {
       console.error("Failed to create data channel:", error);
       this.handleConnectionError(
         new Error(
@@ -592,12 +636,16 @@ export class WebRTCService {
   /**
    * Set up the data channel event handlers
    */
-  private setupDataChannel(channel: RTCDataChannel): void {this.dataChannel = channel;
+  private setupDataChannel(channel: RTCDataChannel): void {
+    this.dataChannel = channel;
 
-    channel.onopen = () => {console.debug(`Channel state: ${channel.readyState}`);this.handleConnectionEstablished();
+    channel.onopen = () => {
+      console.debug(`Channel state: ${channel.readyState}`);
+      this.handleConnectionEstablished();
     };
 
-    channel.onclose = () => {this.handleConnectionClosed();
+    channel.onclose = () => {
+      this.handleConnectionClosed();
     };
 
     channel.onerror = (error) => {
@@ -607,11 +655,13 @@ export class WebRTCService {
 
     channel.onmessage = (event) => {
       try {
-        const message: AnyNetworkMessage = JSON.parse(event.data);this.handleIncomingMessage(message);
+        const message: AnyNetworkMessage = JSON.parse(event.data);
+        this.handleIncomingMessage(message);
       } catch (error) {
         console.error("Error parsing message:", error);
       }
-    };}
+    };
+  }
 
   /**
    * Handle incoming message from the data channel
@@ -619,7 +669,8 @@ export class WebRTCService {
    */
   private handleIncomingMessage(message: AnyNetworkMessage): void {
     // Handle ping message (for latency measurement)
-    if (message.type === MessageType.PING) {// Send pong response
+    if (message.type === MessageType.PING) {
+      // Send pong response
       this.sendMessage({
         type: MessageType.PONG,
         timestamp: Date.now(),
@@ -627,7 +678,8 @@ export class WebRTCService {
 
       // If we're the host, also send current game state in response to a ping
       // This helps ensure clients get updated even if they miss state updates
-      if (this.role === PlayerRole.HOST) {// Use a timeout to ensure the pong message is processed first
+      if (this.role === PlayerRole.HOST) {
+        // Use a timeout to ensure the pong message is processed first
         setTimeout(() => {
           // Trigger an event that GameManager can listen for to send the current state
           window.dispatchEvent(new CustomEvent("host-ping-received"));
@@ -637,10 +689,12 @@ export class WebRTCService {
     }
 
     // Handle pong message (for latency measurement)
-    if (message.type === MessageType.PONG) {this.lastPongTime = Date.now();
+    if (message.type === MessageType.PONG) {
+      this.lastPongTime = Date.now();
 
       // If we're the client, we can request a state update after receiving a pong
-      if (this.role === PlayerRole.CLIENT) {// Trigger an event that GameManager can listen for
+      if (this.role === PlayerRole.CLIENT) {
+        // Trigger an event that GameManager can listen for
         window.dispatchEvent(new CustomEvent("client-pong-received"));
       }
       return;
@@ -760,7 +814,8 @@ export class WebRTCService {
   /**
    * Handle successful connection establishment
    */
-  private handleConnectionEstablished(): void {// Clear connection timeout
+  private handleConnectionEstablished(): void {
+    // Clear connection timeout
     if (this.connectionTimeout !== null) {
       clearTimeout(this.connectionTimeout);
       this.connectionTimeout = null;
@@ -775,7 +830,8 @@ export class WebRTCService {
   /**
    * Handle connection closure
    */
-  private handleConnectionClosed(): void {this.stopPingPong();
+  private handleConnectionClosed(): void {
+    this.stopPingPong();
     this.setConnectionStatus(ConnectionStatus.DISCONNECTED);
   }
 
@@ -866,7 +922,8 @@ export class WebRTCService {
   /**
    * Get the session info
    */
-  public getSessionInfo(): SessionInfo | null {return this.sessionInfo;
+  public getSessionInfo(): SessionInfo | null {
+    return this.sessionInfo;
   }
 
   /**

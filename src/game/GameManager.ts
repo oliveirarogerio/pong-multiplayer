@@ -79,14 +79,16 @@ export class GameManager {
         // Buffer received state for reconciliation
         syncService.bufferGameState(message.state);
 
-        // Log the received state status to help with debugging// Check if we need to reconcile (fix client-side prediction)
+        // Log the received state status to help with debugging
+        // Check if we need to reconcile (fix client-side prediction)
         const localState = this.game.getState();
 
         // If we're in waiting state but host is not, transition out of waiting
         if (
           localState.status === GameStatus.WAITING_FOR_OPPONENT &&
           message.state.status !== GameStatus.WAITING_FOR_OPPONENT
-        ) {this.game.setStatus(message.state.status);
+        ) {
+          this.game.setStatus(message.state.status);
 
           // Start the game loop if it's not running
           this.gameLoop.start();
@@ -95,7 +97,8 @@ export class GameManager {
           syncService.start();
         }
 
-        if (syncService.needsReconciliation(localState, message.state)) {this.game.setState(message.state);
+        if (syncService.needsReconciliation(localState, message.state)) {
+          this.game.setState(message.state);
         } else {
           // Just update opponent state and other non-local entities
           const updatedState = { ...localState };
@@ -118,7 +121,8 @@ export class GameManager {
         syncService.bufferInput(message);
 
         // Log received paddle movement
-        if (message.isMovingUp || message.isMovingDown) {}
+        if (message.isMovingUp || message.isMovingDown) {
+        }
 
         // Update opponent paddle
         this.game.setOpponentInput(
@@ -147,7 +151,8 @@ export class GameManager {
         this.lastProcessedGameControl = {
           action: message.action,
           timestamp: message.timestamp || Date.now(),
-        };switch (message.action) {
+        };
+        switch (message.action) {
           case GameControlAction.START:
             if (!this.isStarting) {
               this.isStarting = true;
@@ -156,7 +161,8 @@ export class GameManager {
               setTimeout(() => {
                 this.isStarting = false;
               }, 2000);
-            } else {}
+            } else {
+            }
             break;
           case GameControlAction.PAUSE:
             this.pauseGame();
@@ -181,9 +187,12 @@ export class GameManager {
         audioService.playSound("game_start", 0.5);
 
         // Make sure keyboard bindings are active for both host and client
-        this.bindKeyboardEvents();// If we're the host, ensure clients know our status immediately
-        if (this.isHost) {syncService.syncGameState(this.game.getState(), Date.now());
-        } else {// Send a ping to trigger host to send their current state
+        this.bindKeyboardEvents();
+        // If we're the host, ensure clients know our status immediately
+        if (this.isHost) {
+          syncService.syncGameState(this.game.getState(), Date.now());
+        } else {
+          // Send a ping to trigger host to send their current state
           webRTCService.sendMessage({
             type: MessageType.PING,
             timestamp: Date.now(),
@@ -229,7 +238,8 @@ export class GameManager {
         this.game.getStatus() === GameStatus.WAITING_FOR_OPPONENT &&
         webRTCService.getConnectionStatus() === ConnectionStatus.CONNECTED
       ) {
-        // Request current game state from host by sending a pingwebRTCService.sendMessage({
+        // Request current game state from host by sending a ping
+        webRTCService.sendMessage({
           type: MessageType.PING,
           timestamp: Date.now(),
         });
@@ -250,29 +260,38 @@ export class GameManager {
   /**
    * Start the game
    */
-  public startGame(): void {console.log(`Current game status: ${this.game.getState().status}`);console.log(
+  public startGame(): void {
+    console.log(`Current game status: ${this.game.getState().status}`);
+    console.log(
       `WebRTC connection status: ${webRTCService.getConnectionStatus()}`
     );
 
     // Check if both players are connected in network game
     if (this.isNetworkGame) {
-      if (webRTCService.getConnectionStatus() !== ConnectionStatus.CONNECTED) {return;
+      if (webRTCService.getConnectionStatus() !== ConnectionStatus.CONNECTED) {
+        return;
       }
 
       // Only host can control the game in multiplayer mode
-      if (!this.isHost) {this.sendGameControl(GameControlAction.START);
+      if (!this.isHost) {
+        this.sendGameControl(GameControlAction.START);
         return;
       }
-    }this.game.startCountdown();.status}`
-    );
+    }
 
-    this.gameLoop.start();// Start the synchronization service
-    if (this.isNetworkGame) {syncService.start();
+    this.game.startCountdown();
+    this.gameLoop.start();
+
+    // Start the synchronization service
+    if (this.isNetworkGame) {
+      syncService.start();
     }
 
     // Notify the client if we're the host
-    if (this.isNetworkGame && this.isHost) {this.sendGameControl(GameControlAction.START);
-    }}
+    if (this.isNetworkGame && this.isHost) {
+      this.sendGameControl(GameControlAction.START);
+    }
+  }
 
   /**
    * Pause the game
@@ -340,8 +359,6 @@ export class GameManager {
   public stop(): void {
     this.gameLoop.stop();
     this.unbindKeyboardEvents();
-
-    // Stop the synchronization service
     syncService.stop();
   }
 
@@ -349,10 +366,13 @@ export class GameManager {
    * Bind keyboard events for paddle control
    */
   public bindKeyboardEvents(): void {
-    if (this.keyboardEventsBound) {return;
-    }window.addEventListener("keydown", this.handleKeyDown.bind(this));
+    if (this.keyboardEventsBound) {
+      return;
+    }
+    window.addEventListener("keydown", this.handleKeyDown.bind(this));
     window.addEventListener("keyup", this.handleKeyUp.bind(this));
-    this.keyboardEventsBound = true;}
+    this.keyboardEventsBound = true;
+  }
 
   /**
    * Unbind keyboard events
@@ -442,11 +462,15 @@ export class GameManager {
    * Initialize a host session and return the session code
    * @returns The session code to share with the client
    */
-  public initializeHost(): string {try {");
-      const sessionCode = webRTCService.initHostSession();// Update local state
+  public initializeHost(): string {
+    try {
+      const sessionCode = webRTCService.initHostSession();
+      // Update local state
       this.isHost = true;
-      this.isNetworkGame = true;// The Game class is initialized with the player role in the constructor
-      // No need to set it againreturn sessionCode;
+      this.isNetworkGame = true;
+      // The Game class is initialized with the player role in the constructor
+      // No need to set it again
+      return sessionCode;
     } catch (error) {
       console.error("=== GAME MANAGER: HOST INITIALIZATION FAILED ===");
       console.error("Error details:", error);
@@ -459,14 +483,16 @@ export class GameManager {
    * @returns Promise that resolves when joined successfully, rejects on error
    */
   public async joinGame(sessionCode: string): Promise<void> {
-    try {await webRTCService.joinSession(sessionCode);
+    try {
+      await webRTCService.joinSession(sessionCode);
 
       // Ensure keyboard bindings are active for the client
       this.bindKeyboardEvents();
 
       // Ensure that the game knows the client's role
       this.isHost = false;
-      this.isNetworkGame = true;} catch (error) {
+      this.isNetworkGame = true;
+    } catch (error) {
       console.error("Error joining game:", error);
       throw error;
     }
@@ -494,19 +520,22 @@ export class GameManager {
   }
 
   /**
-   * Host ping event handler
+   * Handle host ping event
    */
   private handleHostPingEvent = () => {
-    if (this.isHost) {syncService.syncGameState(this.game.getState(), Date.now());
+    if (this.isHost) {
+      syncService.syncGameState(this.game.getState(), Date.now());
     }
   };
 
   /**
-   * Client pong event handler
+   * Handle client pong event
    */
   private handleClientPongEvent = () => {
-    if (!this.isHost) {// If we're still waiting, send another ping to request state
-      if (this.game.getStatus() === GameStatus.WAITING_FOR_OPPONENT) {webRTCService.sendMessage({
+    if (!this.isHost) {
+      // If we're still waiting, send another ping to request state
+      if (this.game.getStatus() === GameStatus.WAITING_FOR_OPPONENT) {
+        webRTCService.sendMessage({
           type: MessageType.PING,
           timestamp: Date.now(),
         });
@@ -522,10 +551,9 @@ export class GameManager {
     const initAudio = async () => {
       try {
         await audioService.initialize();
-
         // Play a subtle initialization sound to confirm audio is working
-        // Use low volume to avoid startling the user
-        audioService.playSound("countdown", 0.2, 0.8);} catch (error) {
+        audioService.playSound("countdown", 0.2, 0.8);
+      } catch (error) {
         console.error("Failed to initialize audio:", error);
       }
     };

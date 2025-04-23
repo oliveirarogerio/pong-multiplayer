@@ -200,9 +200,9 @@ export class Game {
 
     // Handle countdown
     if (this.status === GameStatus.COUNTDOWN) {
-      // Debug logging}, delta: ${deltaTime.toFixed(
-          4
-        )}`
+      // Debug logging
+      console.log(
+        "Countdown fixedUpdate called, delta: " + deltaTime.toFixed(4)
       );
 
       this.countdownTimer += deltaTime;
@@ -216,19 +216,22 @@ export class Game {
         this.countdownTimer = 0;
 
         // If countdown is done, start the game
-        if (this.countdown <= 0) {this.startGame();
+        if (this.countdown <= 0) {
+          this.startGame();
           return;
         }
       } else if (this.countdownTimer >= 1) {
         this.countdown--;
-        this.countdownTimer = 0;// Play countdown sound
+        this.countdownTimer = 0;
+        // Play countdown sound
         if (this.countdown > 0) {
           // Higher pitch for lower numbers (more urgency)
           const pitch = 1.0 + 0.1 * (3 - this.countdown);
           audioService.playSound("countdown", 1.0, pitch);
         }
 
-        if (this.countdown <= 0) {this.startGame();
+        if (this.countdown <= 0) {
+          this.startGame();
         }
       }
 
@@ -300,7 +303,8 @@ export class Game {
 
       if (this.turboModeTimeRemaining <= 0) {
         this.turboModeActive = false;
-        this.gameSpeedMultiplier = 1.0;}
+        this.gameSpeedMultiplier = 1.0;
+      }
     }
 
     // Check for turbo mode power-ups
@@ -503,8 +507,7 @@ export class Game {
    */
   private applyPowerUpEffect(powerUp: PowerUp): void {
     const isPlayerPowerUp = powerUp.affectsPlayer === "player";
-    const isOpponentPowerUp = powerUp.affectsPlayer === "opponent";`
-    );
+    const isOpponentPowerUp = powerUp.affectsPlayer === "opponent";
 
     switch (powerUp.type) {
       case PowerUpType.SPEED_UP:
@@ -717,7 +720,9 @@ export class Game {
   /**
    * Start the countdown to begin the game
    */
-  public startCountdown(): void {CALLED ===");console.log(
+  public startCountdown(): void {
+    console.log("startCountdown called");
+    console.log(
       `Existing timer: ${this.countdownTimeout !== null ? "active" : "none"}`
     );
 
@@ -725,33 +730,39 @@ export class Game {
     if (
       this.status === GameStatus.PLAYING ||
       this.status === GameStatus.COUNTDOWN
-    ) {return;
+    ) {
+      return;
     }
 
     // Stop any existing countdown
-    if (this.countdownTimeout !== null) {clearTimeout(this.countdownTimeout);
+    if (this.countdownTimeout !== null) {
+      clearTimeout(this.countdownTimeout);
       this.countdownTimeout = null;
     }
 
     // Reset the game state for a new round
     this.resetBall(Math.random() < 0.5);
     this.countdown = 3;
-    this.status = GameStatus.COUNTDOWN;// Play countdown sound
+    this.status = GameStatus.COUNTDOWN;
+    // Play countdown sound
     audioService.playSound("countdown", 0.7);
 
     // Schedule the actual game start
-    this.countdownTimeout = window.setTimeout(() => {");
+    this.countdownTimeout = window.setTimeout(() => {
       this.decrementCountdown();
     }, 1000);
 
     // Set up failsafe to ensure game can start if countdown gets stuck
-    this.setupCountdownFailsafe();COMPLETED ===");
+    this.setupCountdownFailsafe();
   }
 
-  private decrementCountdown(): void {// Decrement the countdown value
+  private decrementCountdown(): void {
+    // Decrement the countdown value
     this.countdown--;
-    this.countdownTimer = 0;// If countdown is done, start the game
-    if (this.countdown <= 0) {// Play start sound
+    this.countdownTimer = 0;
+    // If countdown is done, start the game
+    if (this.countdown <= 0) {
+      // Play start sound
       audioService.playSound("start", 1.0);
       this.startGame();
       return;
@@ -759,9 +770,12 @@ export class Game {
 
     // Play countdown sound with increasing pitch as we get closer to start
     const pitch = 1.0 + 0.1 * (3 - this.countdown);
-    audioService.playSound("countdown", 1.0, pitch);// Schedule next decrement
-    this.countdownTimeout = window.setTimeout(() => {this.decrementCountdown();
-    }, 1000);}
+    audioService.playSound("countdown", 1.0, pitch);
+    // Schedule next decrement
+    this.countdownTimeout = window.setTimeout(() => {
+      this.decrementCountdown();
+    }, 1000);
+  }
 
   /**
    * Setup a failsafe mechanism to ensure countdown progresses
@@ -769,37 +783,51 @@ export class Game {
   private setupCountdownFailsafe(): void {
     // Clear any existing timeout
     if (this.countdownTimeout !== null) {
-      window.clearTimeout(this.countdownTimeout);}// If countdown is done, start the game
-    if (this.countdown <= 0) {this.startGame();
+      window.clearTimeout(this.countdownTimeout);
+    }
+    // If countdown is done, start the game
+    if (this.countdown <= 0) {
+      this.startGame();
       return;
     }
 
     // Set a 1-second timeout to decrement the countdown
-    this.countdownTimeout = window.setTimeout(() => {// Decrement the countdown
+    this.countdownTimeout = window.setTimeout(() => {
+      // Decrement the countdown
       this.countdown--;
-      this.countdownTimer = 0;// Play countdown sound
+      this.countdownTimer = 0;
+      // Play countdown sound
       if (this.countdown > 0) {
         const pitch = 1.0 + 0.1 * (3 - this.countdown);
-        audioService.playSound("countdown", 1.0, pitch);}
+        audioService.playSound("countdown", 1.0, pitch);
+      }
 
       // Continue the failsafe chain
       this.setupCountdownFailsafe();
-    }, 1000);}
+    }, 1000);
+  }
 
   /**
    * Start the game after countdown
    */
-  private startGame(): void {// Clear any countdown failsafe timeout
-    if (this.countdownTimeout !== null) {window.clearTimeout(this.countdownTimeout);
-      this.countdownTimeout = null;}
-
-    // Make sure we're not already in playing state to avoid duplicate calls
-    if (this.status === GameStatus.PLAYING) {return;
+  private startGame(): void {
+    // Clear any countdown failsafe timeout
+    if (this.countdownTimeout !== null) {
+      window.clearTimeout(this.countdownTimeout);
+      this.countdownTimeout = null;
     }
 
-    this.status = GameStatus.PLAYING;// Serve the ball to a random side to start
+    // Make sure we're not already in playing state to avoid duplicate calls
+    if (this.status === GameStatus.PLAYING) {
+      return;
+    }
+
+    this.status = GameStatus.PLAYING;
+    // Serve the ball to a random side to start
     const serveToLeft = Math.random() >= 0.5;
-    this.resetBall(serveToLeft);.x}, y=${
+    this.resetBall(serveToLeft);
+    console.log(
+      `New game started, ball velocity: x=${this.ball.getVelocity().x}, y=${
         this.ball.getVelocity().y
       }`
     );
@@ -838,7 +866,8 @@ export class Game {
    */
   public cleanup(): void {
     // Clear any countdown timeout
-    if (this.countdownTimeout !== null) {window.clearTimeout(this.countdownTimeout);
+    if (this.countdownTimeout !== null) {
+      window.clearTimeout(this.countdownTimeout);
       this.countdownTimeout = null;
     }
 
@@ -856,31 +885,18 @@ export class Game {
    * Restart the game
    */
   public restartGame(): void {
-    // Clean up any existing timers
-    this.cleanup();
-
     this.playerScore = 0;
     this.opponentScore = 0;
     this.winner = null;
+    this.countdown = 3;
+    this.countdownTimer = 0;
+    this.status = GameStatus.COUNTDOWN;
     this.initializeGameObjects();
-
-    // Reset power-ups
     this.powerUpManager.reset();
-
-    // Reset game speed
-    this.turboModeActive = false;
-    this.gameSpeedMultiplier = 1.0;
-
-    // Reset additional balls
-    this.additionalBalls = [];
-
-    this.startCountdown();
   }
 
   /**
-   * Set the player's input for paddle movement
-   * @param isUpPressed Whether the up key is pressed
-   * @param isDownPressed Whether the down key is pressed
+   * Set player input for paddle movement
    */
   public setPlayerInput(isUpPressed: boolean, isDownPressed: boolean): void {
     this.playerPaddle.setMovingUp(isUpPressed);
@@ -888,9 +904,7 @@ export class Game {
   }
 
   /**
-   * Set the opponent's input for paddle movement
-   * @param isUpPressed Whether the up key is pressed
-   * @param isDownPressed Whether the down key is pressed
+   * Set opponent input for paddle movement
    */
   public setOpponentInput(isUpPressed: boolean, isDownPressed: boolean): void {
     this.opponentPaddle.setMovingUp(isUpPressed);
@@ -901,26 +915,20 @@ export class Game {
    * Get the current game state
    */
   public getState(): GameState {
-    const additionalBallStates = this.additionalBalls.map((ball) =>
-      ball.getState()
-    );
-
     return {
-      status: this.status,
       ball: this.ball.getState(),
       playerPaddle: this.playerPaddle.getState(),
       opponentPaddle: this.opponentPaddle.getState(),
+      status: this.status,
       playerScore: this.playerScore,
       opponentScore: this.opponentScore,
-      timestamp: Date.now(),
-      countdown:
-        this.status === GameStatus.COUNTDOWN ? this.countdown : undefined,
+      countdown: this.countdown,
       winner: this.winner,
-      config: { ...this.config },
-      // New fields for enhanced mechanics
       powerUps: this.powerUpManager.getFieldPowerUps(),
       activePowerUps: this.powerUpManager.getActivePowerUps(),
-      additionalBalls: additionalBallStates,
+      config: this.config,
+      timestamp: Date.now(),
+      additionalBalls: this.additionalBalls.map((ball) => ball.getState()),
       turboModeActive: this.turboModeActive,
       turboModeTimeRemaining: this.turboModeTimeRemaining,
       gameSpeedMultiplier: this.gameSpeedMultiplier,
@@ -928,120 +936,17 @@ export class Game {
   }
 
   /**
-   * Set the game state from a GameState object
-   * @param state Game state
+   * Set the game state
    */
   public setState(state: GameState): void {
-    const oldStatus = this.status;
-    this.status = state.status;
-
-    // Log important state transitions
-    if (oldStatus !== state.status) {// Special handling for transitions from WAITING_FOR_OPPONENT
-      if (oldStatus === GameStatus.WAITING_FOR_OPPONENT) {// If transitioning to PLAYING directly, ensure we've initialized properly
-        if (
-          state.status === GameStatus.PLAYING &&
-          this.ball.getVelocity().x === 0 &&
-          this.ball.getVelocity().y === 0
-        ) {// Give the ball a velocity since we're jumping directly to PLAYING
-          const serveToLeft = Math.random() >= 0.5;
-          this.resetBall(serveToLeft);
-        }
-      }
-    }
-
-    // Special handling for countdown state
-    if (
-      state.status === GameStatus.COUNTDOWN &&
-      oldStatus !== GameStatus.COUNTDOWN
-    ) {this.startCountdown(); // This will set up the failsafe
-      return; // startCountdown already sets everything we need
-    }
-
-    // Update object states
     this.ball.setState(state.ball);
     this.playerPaddle.setState(state.playerPaddle);
     this.opponentPaddle.setState(state.opponentPaddle);
-
-    // Update game state
-    this.playerScore = state.playerScore;
-    this.opponentScore = state.opponentScore;
-
-    // Only update countdown if in countdown state to prevent recursion issues
-    if (
-      state.status === GameStatus.COUNTDOWN &&
-      state.countdown !== undefined
-    ) {
-      // Only update countdown if remote value is different
-      if (this.countdown !== state.countdown) {this.countdown = state.countdown;
-        this.countdownTimer = 0; // Reset timer when changing countdown value
-      }
-    }
-
+    this.status = state.status;
+    this.playerScore = state.playerScore || 0;
+    this.opponentScore = state.opponentScore || 0;
+    this.countdown = state.countdown || 3;
     this.winner = state.winner || null;
-    this.config = { ...state.config };
-
-    // Set new fields for enhanced mechanics
-    if (state.powerUps) {
-      // We don't directly set powerUps here because they're managed by PowerUpManager
-      // Instead, we'll use this information when rendering
-    }
-
-    if (state.turboModeActive !== undefined) {
-      this.turboModeActive = state.turboModeActive;
-    }
-
-    if (state.turboModeTimeRemaining !== undefined) {
-      this.turboModeTimeRemaining = state.turboModeTimeRemaining;
-    }
-
-    if (state.gameSpeedMultiplier !== undefined) {
-      this.gameSpeedMultiplier = state.gameSpeedMultiplier;
-    }
-
-    // Update additional balls
-    if (state.additionalBalls && state.additionalBalls.length > 0) {
-      // Make sure we have the right number of balls
-      while (this.additionalBalls.length < state.additionalBalls.length) {
-        this.additionalBalls.push(
-          new Ball(
-            { x: this.fieldWidth / 2, y: this.fieldHeight / 2 },
-            10,
-            { x: 0, y: 0 },
-            this.config.ballSpeed
-          )
-        );
-      }
-
-      // Remove excess balls
-      while (this.additionalBalls.length > state.additionalBalls.length) {
-        this.additionalBalls.pop();
-      }
-
-      // Update each ball state
-      for (let i = 0; i < state.additionalBalls.length; i++) {
-        this.additionalBalls[i].setState(state.additionalBalls[i]);
-      }
-    } else {
-      // Clear additional balls if there are none in the state
-      this.additionalBalls = [];
-    }
-  }
-
-  /**
-   * Draw power-ups on the game canvas
-   * @param ctx Canvas rendering context
-   */
-  public drawPowerUps(ctx: CanvasRenderingContext2D): void {
-    if (this.config.enablePowerUps) {
-      this.powerUpManager.draw(ctx);
-    }
-  }
-
-  /**
-   * Get the current game status
-   */
-  public getStatus(): GameStatus {
-    return this.status;
   }
 
   /**
@@ -1052,49 +957,29 @@ export class Game {
   }
 
   /**
+   * Get the current game status
+   */
+  public getStatus(): GameStatus {
+    return this.status;
+  }
+
+  /**
    * Resize the game field
-   * @param width New width of the game field
-   * @param height New height of the game field
    */
   public resizeField(width: number, height: number): void {
     this.fieldWidth = width;
     this.fieldHeight = height;
-
-    // Update paddle boundaries
-    this.playerPaddle.setBoundaries(0, this.fieldHeight);
-    this.opponentPaddle.setBoundaries(0, this.fieldHeight);
-
-    // Update power-up manager's field size
-    if (this.powerUpManager) {
-      this.powerUpManager.setFieldSize(width, height);
-    }
+    this.powerUpManager.setFieldSize(width, height);
+    this.playerPaddle.setBoundaries(0, height);
+    this.opponentPaddle.setBoundaries(0, height);
   }
 
   /**
    * Update game configuration
-   * @param config Partial game configuration to update
    */
   public updateConfig(config: Partial<GameConfig>): void {
     this.config = { ...this.config, ...config };
-
-    // Apply configuration to ball
-    if (config.ballSpeed !== undefined) {
-      this.ball.setMaxSpeed(config.ballSpeed);
-    }
-
-    // Apply configuration to paddles
-    if (config.paddleHeight !== undefined || config.paddleWidth !== undefined) {
-      const width = config.paddleWidth ?? this.playerPaddle.getWidth();
-      const height = config.paddleHeight ?? this.playerPaddle.getHeight();
-
-      this.playerPaddle.setWidth(width);
-      this.playerPaddle.setHeight(height);
-      this.opponentPaddle.setWidth(width);
-      this.opponentPaddle.setHeight(height);
-    }
-
-    // Update power-up settings
-    if (this.powerUpManager && config.powerUpFrequency !== undefined) {
+    if (config.powerUpFrequency !== undefined) {
       this.powerUpManager.setFrequency(config.powerUpFrequency);
     }
   }

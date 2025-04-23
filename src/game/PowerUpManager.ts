@@ -63,7 +63,8 @@ export class PowerUpManager {
 
         // Remove expired power-ups
         if (powerUp.duration !== undefined && elapsedTime >= powerUp.duration) {
-          this.activePowerUps.splice(i, 1);}
+          this.activePowerUps.splice(i, 1);
+        }
       }
     }
   }
@@ -93,8 +94,7 @@ export class PowerUpManager {
       affectsPlayer: Math.random() < 0.5 ? "player" : "opponent",
     };
 
-    this.powerUps.push(powerUp);}, ${y.toFixed(0)})`
-    );
+    this.powerUps.push(powerUp);
   }
 
   /**
@@ -144,8 +144,7 @@ export class PowerUpManager {
         );
 
         // Play sound
-        audioService.playSound("score", 0.7, 1.2);`
-        );
+        audioService.playSound("score", 0.7, 1.2);
 
         return powerUp;
       }

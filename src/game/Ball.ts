@@ -111,10 +111,7 @@ export class Ball {
     );
 
     // Apply the new speed scale to the velocity
-    this.normalizeVelocity();}x (Hit #${
-        this.hitCounter
-      })`
-    );
+    this.normalizeVelocity();
   }
 
   /**
@@ -204,76 +201,38 @@ export class Ball {
     // Check if the distance is less than the radius of the ball
     if (distanceSquared <= this.radius * this.radius) {
       // Handle collision with the paddle
-      const previousVelocityX = this.velocity.x;
-
-      // Reverse the x velocity
-      this.velocity.x = isLeftPaddle
-        ? Math.abs(this.velocity.x)
-        : -Math.abs(this.velocity.x);
-
-      // Add some angle based on where on the paddle it hit
-      // Higher on the paddle = more upward angle, lower = more downward angle
-      const hitPositionRelative =
-        (this.position.y - paddleY) / (paddleHeight / 2);
-
-      // Enhanced physics: more extreme angles near the edges
-      const angleFactor = Math.pow(hitPositionRelative, 3) * 10; // Increased from 8
-      this.velocity.y += angleFactor;
-
-      // Add random curve effect if hit is off-center
-      if (Math.abs(hitPositionRelative) > 0.3) {
-        // Curve intensity based on how off-center the hit is
-        const curveIntensity = Math.min(
-          0.8,
-          Math.abs(hitPositionRelative) * 0.7
-        );
-        // Direction based on which side of the paddle was hit
-        const curveDirection =
-          hitPositionRelative > 0 ? Math.PI / 2 : -Math.PI / 2;
-        this.setCurve(curveIntensity, curveDirection);
-      }
-
-      // Cap the y velocity ratio to maintain overall speed
-      const currentSpeed = Math.sqrt(
-        this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
-      );
-      const maxYRatio = 0.85; // Increased from 0.8 to allow steeper angles
-
-      if (Math.abs(this.velocity.y / currentSpeed) > maxYRatio) {
-        // Too much y velocity, normalize
-        const yDirection = this.velocity.y > 0 ? 1 : -1;
-        const xDirection = this.velocity.x > 0 ? 1 : -1;
-
-        // Set y component to be at most maxYRatio of total speed
-        this.velocity.y = currentSpeed * maxYRatio * yDirection;
-
-        // Recalculate x to maintain total speed
-        const newXMagnitude = Math.sqrt(
-          currentSpeed * currentSpeed - this.velocity.y * this.velocity.y
-        );
-        this.velocity.x = newXMagnitude * xDirection;
-      }
-
-      // Increase speed after each paddle hit
-      this.increaseBallSpeed();
-
-      // Prevent the ball from getting stuck in the paddle
-      if (isLeftPaddle) {
-        // If coming from the left side, push it right
-        if (previousVelocityX < 0) {
-          this.position.x = paddleRight + this.radius + 0.1;
-        }
-      } else {
-        // If coming from the right side, push it left
-        if (previousVelocityX > 0) {
-          this.position.x = paddleLeft - this.radius - 0.1;
-        }
-      }
-
+      this.handlePaddleCollision(paddleY, paddleHeight, isLeftPaddle);
       return true;
     }
 
     return false;
+  }
+
+  private handlePaddleCollision(
+    paddleY: number,
+    paddleHeight: number,
+    isLeftPaddle: boolean
+  ): void {
+    // Reverse X direction
+    this.velocity.x = isLeftPaddle
+      ? Math.abs(this.velocity.x)
+      : -Math.abs(this.velocity.x);
+
+    // Calculate relative impact point (-1 to 1)
+    const relativeIntersectY = (paddleY - this.position.y) / (paddleHeight / 2);
+
+    // Convert to angle (-45 to 45 degrees)
+    const bounceAngle = relativeIntersectY * 0.785398; // 0.785398 = 45 degrees in radians
+
+    // Calculate new velocity components
+    const speed = Math.sqrt(
+      this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
+    );
+    this.velocity.x = speed * Math.cos(bounceAngle) * (isLeftPaddle ? 1 : -1);
+    this.velocity.y = -speed * Math.sin(bounceAngle);
+
+    // Increase ball speed
+    this.increaseBallSpeed();
   }
 
   /**
